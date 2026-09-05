@@ -17,44 +17,8 @@
         }
         a, .card, .card a, .search-btn, .brand-card { cursor: pointer; }
 
-        /* ===== 动态背景（科技感粒子流，男生风格） ===== */
-        .bg-canvas {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -1;
-            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a1a2e 100%);
-        }
-        .bg-grid {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -1;
-            background-image:
-                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: gridMove 20s linear infinite;
-        }
-        @keyframes gridMove {
-            0% { background-position: 0 0; }
-            100% { background-position: 50px 50px; }
-        }
-        .bg-glow {
-            position: fixed;
-            width: 600px; height: 600px;
-            border-radius: 50%;
-            filter: blur(120px);
-            z-index: -1;
-            opacity: 0.3;
-            animation: glowFloat 15s ease-in-out infinite;
-        }
-        .bg-glow.g1 { background: #00d4ff; top: -200px; left: -200px; }
-        .bg-glow.g2 { background: #7b2ff7; bottom: -200px; right: -200px; animation-delay: -7s; }
-        @keyframes glowFloat {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(100px, 50px) scale(1.2); }
-        }
+        /* ===== 动态背景（Canvas粒子宇宙） ===== */
+        #bgCanvas { display: block; }
 
         /* ===== 开机动画 ===== */
         #boot-screen {
@@ -224,10 +188,7 @@
 </head>
 <body>
     <!-- 动态背景 -->
-    <div class="bg-canvas"></div>
-    <div class="bg-grid"></div>
-    <div class="bg-glow g1"></div>
-    <div class="bg-glow g2"></div>
+    <canvas id="bgCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;"></canvas>
 
     <!-- 音效 -->
     <audio id="bootSound" src="logon.wav" preload="auto"></audio>
@@ -429,6 +390,127 @@
     </div>
 
     <script>
+        // ===== 炫酷宇宙粒子动态背景 =====
+        (function() {
+            var canvas = document.getElementById('bgCanvas');
+            var ctx = canvas.getContext('2d');
+            var W, H, particles = [], meteors = [], mouse = {x: -9999, y: -9999};
+            
+            function resize() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+            window.addEventListener('mousemove', function(e) { mouse.x = e.clientX; mouse.y = e.clientY; });
+            window.addEventListener('mouseleave', function() { mouse.x = -9999; mouse.y = -9999; });
+            
+            // 粒子类
+            function Particle() {
+                this.x = Math.random() * W;
+                this.y = Math.random() * H;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.r = Math.random() * 1.8 + 0.5;
+                this.opacity = Math.random() * 0.6 + 0.2;
+                this.color = Math.random() > 0.7 ? '#7b2ff7' : '#00d4ff';
+            }
+            Particle.prototype.update = function() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0) this.x = W;
+                if (this.x > W) this.x = 0;
+                if (this.y < 0) this.y = H;
+                if (this.y > H) this.y = 0;
+                // 鼠标吸引
+                var dx = mouse.x - this.x, dy = mouse.y - this.y;
+                var dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 120) {
+                    this.x += dx * 0.01;
+                    this.y += dy * 0.01;
+                }
+            };
+            Particle.prototype.draw = function() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.opacity;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            };
+            
+            // 流星类
+            function Meteor() {
+                this.x = Math.random() * W;
+                this.y = -50;
+                this.len = Math.random() * 80 + 60;
+                this.speed = Math.random() * 8 + 6;
+                this.angle = Math.PI / 4 + (Math.random() - 0.5) * 0.3;
+                this.opacity = 1;
+            }
+            Meteor.prototype.update = function() {
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+                this.opacity -= 0.008;
+            };
+            Meteor.prototype.draw = function() {
+                var grad = ctx.createLinearGradient(
+                    this.x, this.y,
+                    this.x - Math.cos(this.angle) * this.len,
+                    this.y - Math.sin(this.angle) * this.len
+                );
+                grad.addColorStop(0, 'rgba(0,212,255,' + this.opacity + ')');
+                grad.addColorStop(1, 'rgba(0,212,255,0)');
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x - Math.cos(this.angle) * this.len, this.y - Math.sin(this.angle) * this.len);
+                ctx.stroke();
+            };
+            
+            // 初始化粒子
+            for (var i = 0; i < 120; i++) particles.push(new Particle());
+            
+            function animate() {
+                // 深空渐变背景
+                var bgGrad = ctx.createLinearGradient(0, 0, W, H);
+                bgGrad.addColorStop(0, '#0a0a1a');
+                bgGrad.addColorStop(0.5, '#0d1033');
+                bgGrad.addColorStop(1, '#0a1a2e');
+                ctx.fillStyle = bgGrad;
+                ctx.fillRect(0, 0, W, H);
+                
+                // 粒子连线
+                for (var i = 0; i < particles.length; i++) {
+                    for (var j = i + 1; j < particles.length; j++) {
+                        var dx = particles[i].x - particles[j].x;
+                        var dy = particles[i].y - particles[j].y;
+                        var dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist < 100) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = 'rgba(0,212,255,' + (0.15 * (1 - dist/100)) + ')';
+                            ctx.lineWidth = 0.5;
+                            ctx.stroke();
+                        }
+                    }
+                }
+                
+                // 更新绘制粒子
+                particles.forEach(function(p) { p.update(); p.draw(); });
+                
+                // 随机生成流星
+                if (Math.random() < 0.008) meteors.push(new Meteor());
+                meteors = meteors.filter(function(m) { return m.opacity > 0 && m.y < H + 100; });
+                meteors.forEach(function(m) { m.update(); m.draw(); });
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
+        })();
+
         // ===== 数码产品参数数据库 =====
         var phoneDB = {
             // ========== 三星 S系列 ==========
