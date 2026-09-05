@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>董佳轩制作 导航站</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            min-height: 100vh;
+            color: #fff;
+            padding: 40px 20px;
+            overflow-x: hidden;
+            cursor: url('Arrow.cur'), auto;
+            background: #0a0a1a;
+        }
+        a, .card, .card a, .search-btn, .brand-card { cursor: url('Hand.cur'), pointer; }
+
+        /* ===== 动态背景（科技感粒子流，男生风格） ===== */
+        .bg-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0a1a2e 100%);
+        }
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            background-image:
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 50px 50px; }
+        }
+        .bg-glow {
+            position: fixed;
+            width: 600px; height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.3;
+            animation: glowFloat 15s ease-in-out infinite;
+        }
+        .bg-glow.g1 { background: #00d4ff; top: -200px; left: -200px; }
+        .bg-glow.g2 { background: #7b2ff7; bottom: -200px; right: -200px; animation-delay: -7s; }
+        @keyframes glowFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(100px, 50px) scale(1.2); }
+        }
+
+        /* ===== 开机动画 ===== */
+        #boot-screen {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #000;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease;
+        }
+        #boot-screen.fade-out { opacity: 0; pointer-events: none; }
+        .win-logo {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 5px; width: 72px; height: 72px;
+            margin-bottom: 60px;
+            animation: winLogoIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0; transform: scale(0.8);
+        }
+        .win-logo div { background: #fff; border-radius: 1px; }
+        @keyframes winLogoIn {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .boot-ring {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(255,255,255,0.15);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: ringSpin 1.2s linear infinite;
+        }
+        @keyframes ringSpin { to { transform: rotate(360deg); } }
+        .boot-hint {
+            position: absolute; bottom: 80px;
+            color: rgba(255,255,255,0.6); font-size: 14px;
+            animation: hintBlink 1.5s ease-in-out infinite;
+        }
+        @keyframes hintBlink { 0%,100%{opacity:0.3;} 50%{opacity:0.8;} }
+
+        /* ===== 主内容 ===== */
+        .container {
+            max-width: 1200px; margin: 0 auto;
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .container.show { opacity: 1; transform: translateY(0); }
+        header { text-align: center; margin-bottom: 50px; }
+        header h1 {
+            font-size: 2.8em;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7, #ff006e);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        header p { color: #8892b0; font-size: 1.1em; }
+
+        /* 手机搜索框 */
+        .phone-search {
+            max-width: 600px; margin: 0 auto 50px;
+            display: flex; gap: 10px;
+        }
+        .phone-search input {
+            flex: 1; padding: 15px 20px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(0,212,255,0.3);
+            border-radius: 10px; color: #fff;
+            font-size: 16px; outline: none;
+            transition: border-color 0.3s;
+        }
+        .phone-search input:focus { border-color: #00d4ff; }
+        .phone-search input::placeholder { color: #5a6a8a; }
+        .search-btn {
+            padding: 15px 30px;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            border: none; border-radius: 10px;
+            color: #fff; font-size: 16px; font-weight: bold;
+            transition: opacity 0.3s;
+        }
+        .search-btn:hover { opacity: 0.8; }
+
+        .category {
+            margin-bottom: 40px;
+            opacity: 0; transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .category.show { opacity: 1; transform: translateY(0); }
+        .category-title {
+            font-size: 1.5em; color: #00d4ff;
+            margin-bottom: 20px; padding-left: 15px;
+            border-left: 4px solid #00d4ff;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #00d4ff;
+            box-shadow: 0 10px 40px rgba(0,212,255,0.2);
+        }
+        .card h3 { font-size: 1.2em; margin-bottom: 10px; color: #fff; }
+        .card p { color: #8892b0; font-size: 0.9em; line-height: 1.6; margin-bottom: 15px; }
+        .card a {
+            display: inline-block; padding: 8px 20px;
+            background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+            color: #fff; text-decoration: none;
+            border-radius: 6px; font-size: 0.9em;
+            transition: opacity 0.3s;
+        }
+        .card a:hover { opacity: 0.8; }
+        .badge {
+            display: inline-block; padding: 3px 10px;
+            border-radius: 4px; font-size: 0.7em;
+            margin-left: 8px; vertical-align: middle;
+        }
+        .badge-official { background: #00c853; color: #fff; }
+        .badge-third { background: #ff9100; color: #fff; }
+        .badge-old { background: #616161; color: #fff; }
+
+        /* 手机品牌卡片 */
+        .brand-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .brand-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px; padding: 20px;
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        .brand-card:hover {
+            transform: translateY(-3px);
+            border-color: #00d4ff;
+        }
+        .brand-card .brand-name {
+            font-size: 1.1em; font-weight: bold; color: #fff;
+        }
+        .brand-card .brand-desc {
+            font-size: 0.8em; color: #8892b0; margin-top: 5px;
+        }
+
+        .custom-section {
+            background: rgba(255,255,255,0.03);
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 12px; padding: 40px;
+            text-align: center; margin-top: 40px;
+        }
+        .custom-section h2 { color: #ffd700; margin-bottom: 10px; }
+        .custom-section p { color: #8892b0; }
+        footer {
+            text-align: center; margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: #5a6a8a; font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <!-- 动态背景 -->
+    <div class="bg-canvas"></div>
+    <div class="bg-grid"></div>
+    <div class="bg-glow g1"></div>
+    <div class="bg-glow g2"></div>
+
+    <!-- 音效 -->
+    <audio id="bootSound" src="logon.wav" preload="auto"></audio>
+
+    <!-- 开机动画 -->
+    <div id="boot-screen">
+        <div class="win-logo"><div></div><div></div><div></div><div></div></div>
+        <div class="boot-ring"></div>
+        <div class="boot-hint">点击任意处进入</div>
+    </div>
+
+    <div class="container" id="main-content">
+        <header>
+            <h1>董佳轩制作</h1>
+            <p>纯净 · 官方 · 安全的系统下载资源汇总</p>
+        </header>
+
+        <!-- 手机型号搜索 -->
+        <div class="category">
+            <h2 class="category-title">手机型号参数查询</h2>
+            <div class="phone-search">
+                <input type="text" id="phoneInput" placeholder="输入手机型号，如：三星S23、小米14、iPhone15..." onkeydown="if(event.key==='Enter')searchPhone()">
+                <button class="search-btn" onclick="searchPhone()">搜索参数</button>
+            </div>
+            <div class="brand-grid" style="margin-top: 20px;">
+                <div class="brand-card" onclick="filterBrand('三星')"><div class="brand-name">三星</div><div class="brand-desc">S/A/W/Z Fold/Z Flip</div></div>
+                <div class="brand-card" onclick="filterBrand('苹果')"><div class="brand-name">苹果</div><div class="brand-desc">iPhone/Mac/iPad</div></div>
+                <div class="brand-card" onclick="filterBrand('小米')"><div class="brand-name">小米</div><div class="brand-desc">小米/红米/平板</div></div>
+                <div class="brand-card" onclick="filterBrand('华为')"><div class="brand-name">华为</div><div class="brand-desc">Mate/P/平板</div></div>
+                <div class="brand-card" onclick="filterBrand('OPPO')"><div class="brand-name">OPPO</div><div class="brand-desc">Find/Reno/A系列</div></div>
+                <div class="brand-card" onclick="filterBrand('vivo')"><div class="brand-name">vivo</div><div class="brand-desc">X/S/Y系列</div></div>
+                <div class="brand-card" onclick="filterBrand('一加')"><div class="brand-name">一加</div><div class="brand-desc">数字/Ace系列</div></div>
+                <div class="brand-card" onclick="filterBrand('真我')"><div class="brand-name">真我</div><div class="brand-desc">GT/数字系列</div></div>
+            </div>
+            <!-- 品牌机型列表 -->
+            <div id="brandList" style="margin-top: 20px; display: none;">
+                <div class="card" style="background: rgba(123,47,247,0.08); border-color: rgba(123,47,247,0.3);">
+                    <h3 id="brandTitle" style="color: #7b2ff7;"></h3>
+                    <div id="brandModels" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;"></div>
+                </div>
+            </div>
+            <!-- 搜索结果展示区 -->
+            <div id="phoneResult" style="margin-top: 25px; display: none;">
+                <div class="card" style="background: rgba(0,212,255,0.08); border-color: rgba(0,212,255,0.3);">
+                    <h3 id="resultName" style="color: #00d4ff;"></h3>
+                    <div id="resultSpecs" style="color: #ccc; font-size: 0.95em; line-height: 2;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 微软官方 -->
+        <div class="category">
+            <h2 class="category-title">微软官方下载</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Windows 11 <span class="badge badge-official">官方</span></h3>
+                    <p>微软最新操作系统，支持24H2/25H2等版本。提供媒体创建工具、安装助手和ISO镜像三种下载方式。</p>
+                    <a href="https://www.microsoft.com/zh-cn/software-download/windows11" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>Windows 10 <span class="badge badge-official">官方</span></h3>
+                    <p>经典稳定的Windows版本，22H2为最终版本。提供媒体创建工具和ISO镜像下载。</p>
+                    <a href="https://www.microsoft.com/zh-cn/software-download/windows10" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>微软软件下载中心 <span class="badge badge-official">官方</span></h3>
+                    <p>微软官方软件下载总入口，包含Windows、Office等各类微软产品的下载页面。</p>
+                    <a href="https://www.microsoft.com/software-download/" target="_blank">前往下载</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- MSDN镜像 -->
+        <div class="category">
+            <h2 class="category-title">MSDN 原版镜像</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>MSDN我告诉你（新版） <span class="badge badge-third">推荐</span></h3>
+                    <p>Next, I Tell You。提供微软官方原版镜像，涵盖Windows全系列、Office、Visual Studio等，纯净无捆绑。</p>
+                    <a href="https://next.itellyou.cn" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>MSDN我告诉你（旧版） <span class="badge badge-old">旧站</span></h3>
+                    <p>经典原版镜像站，已停止更新但旧版资源齐全。ed2k链接下载，支持迅雷等工具。</p>
+                    <a href="https://msdn.itellyou.cn" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>UUP Dump <span class="badge badge-third">开源</span></h3>
+                    <p>从Windows Update服务器直接下载UUP文件，可自定义生成Windows 10/11 ISO，支持预览版。</p>
+                    <a href="https://uupdump.net" target="_blank">前往下载</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 旧版系统 -->
+        <div class="category">
+            <h2 class="category-title">旧版系统（已停止支持）</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Windows 7 <span class="badge badge-old">已停止</span></h3>
+                    <p>经典操作系统，微软已停止官方支持和下载。可通过MSDN我告诉你获取原版镜像。</p>
+                    <a href="https://next.itellyou.cn" target="_blank">前往MSDN获取</a>
+                </div>
+                <div class="card">
+                    <h3>Windows 8.1 <span class="badge badge-old">已停止</span></h3>
+                    <p>2023年1月已停止扩展支持。微软官网不再提供下载，可通过MSDN获取原版镜像。</p>
+                    <a href="https://next.itellyou.cn" target="_blank">前往MSDN获取</a>
+                </div>
+                <div class="card">
+                    <h3>Windows Server 系列 <span class="badge badge-third">服务器</span></h3>
+                    <p>Windows Server 2012/2016/2019/2022等服务器系统，通过MSDN或微软评估中心获取。</p>
+                    <a href="https://next.itellyou.cn" target="_blank">前往MSDN获取</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 装机实用工具 -->
+        <div class="category">
+            <h2 class="category-title">装机实用工具</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Rufus <span class="badge badge-third">开源</span></h3>
+                    <p>最流行的U盘启动制作工具，支持Windows/Linux镜像，速度快，体积小。</p>
+                    <a href="https://rufus.ie" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>Ventoy <span class="badge badge-third">开源</span></h3>
+                    <p>新一代U盘启动工具，无需反复格式化，直接拷贝ISO到U盘即可启动，支持多系统。</p>
+                    <a href="https://www.ventoy.net" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>WinToUSB <span class="badge badge-third">免费</span></h3>
+                    <p>将Windows系统安装到USB移动硬盘或U盘，实现Windows To Go随身系统。</p>
+                    <a href="https://www.easyuefi.com/wintousb/" target="_blank">前往下载</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 常用软件下载 -->
+        <div class="category">
+            <h2 class="category-title">常用软件下载</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>微信 <span class="badge badge-official">官方</span></h3>
+                    <p>腾讯官方微信PC版，支持聊天、文件传输、小程序等功能。</p>
+                    <a href="https://pc.weixin.qq.com" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>QQ <span class="badge badge-official">官方</span></h3>
+                    <p>腾讯QQ最新版，支持聊天、群聊、文件传输等功能。</p>
+                    <a href="https://im.qq.com/pcqq" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>Edge 浏览器 <span class="badge badge-official">官方</span></h3>
+                    <p>微软Edge浏览器，基于Chromium内核，速度快兼容性好。</p>
+                    <a href="https://www.microsoft.com/edge/download" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>Chrome 浏览器 <span class="badge badge-official">官方</span></h3>
+                    <p>谷歌Chrome浏览器，全球最流行浏览器，扩展丰富。</p>
+                    <a href="https://www.google.cn/chrome/" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>360压缩 <span class="badge badge-official">官方</span></h3>
+                    <p>免费压缩软件，支持RAR/ZIP/7Z等格式，速度快无广告。</p>
+                    <a href="https://yasuo.360.cn/" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>搜狗输入法 <span class="badge badge-official">官方</span></h3>
+                    <p>主流中文输入法，词库丰富，皮肤多。</p>
+                    <a href="https://pinyin.sogou.com/" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>网易云音乐 <span class="badge badge-official">官方</span></h3>
+                    <p>热门音乐播放器，歌单丰富，评论区文化。</p>
+                    <a href="https://music.163.com/#/download" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>Steam <span class="badge badge-official">官方</span></h3>
+                    <p>全球最大游戏平台，海量游戏，社区活跃。</p>
+                    <a href="https://store.steampowered.com/about/" target="_blank">前往下载</a>
+                </div>
+                <div class="card">
+                    <h3>WeGame <span class="badge badge-official">官方</span></h3>
+                    <p>腾讯游戏平台，和平精英、英雄联盟等国服游戏。</p>
+                    <a href="https://www.wegame.com.cn/" target="_blank">前往下载</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="custom-section">
+            <h2>待补充区域</h2>
+            <p>这里预留了位置，你可以告诉我需要添加哪些个人常用网站或资源，我来帮你补充。</p>
+        </div>
+
+        <footer>
+            <p>董佳轩制作 导航站 · 所有资源均来自官方或可信第三方 · 2026</p>
+        </footer>
+    </div>
+
+    <script>
+        // ===== 数码产品参数数据库 =====
+        var phoneDB = {
+            // ========== 三星 S系列 ==========
+            "三星S21": {brand:"三星", name:"三星 Galaxy S21", specs:[["处理器","骁龙888"],["屏幕","6.2英寸 AMOLED 120Hz 2400x1080"],["8+128GB","LPDDR5 + UFS 3.1"],["8+256GB","LPDDR5 + UFS 3.1"],["后置相机","1200万主摄 + 1200万超广角 + 6400万长焦"],["电池","4000mAh"],["充电","25W有线 + 15W无线"],["其他","IP68防水"]]},
+            "三星S21+": {brand:"三星", name:"三星 Galaxy S21+", specs:[["处理器","骁龙888"],["屏幕","6.7英寸 AMOLED 120Hz 2400x1080"],["8+128GB","LPDDR5 + UFS 3.1"],["8+256GB","LPDDR5 + UFS 3.1"],["后置相机","1200万主摄 + 1200万超广角 + 6400万长焦"],["电池","4800mAh"],["充电","25W有线 + 15W无线"],["其他","IP68防水"]]},
+            "三星S21Ultra": {brand:"三星", name:"三星 Galaxy S21 Ultra", specs:[["处理器","骁龙888"],["屏幕","6.8英寸 AMOLED 2K 120Hz"],["12+128GB","LPDDR5 + UFS 3.1"],["12+256GB","LPDDR5 + UFS 3.1"],["16+512GB","LPDDR5 + UFS 3.1"],["16+1TB","LPDDR5 + UFS 3.1"],["后置相机","1.08亿主摄 + 1200万超广角 + 1000万3倍 + 1000万10倍潜望"],["电池","5000mAh"],["充电","25W有线 + 15W无线"],["其他","S Pen支持、IP68防水"]]},
+            "三星S22": {brand:"三星", name:"三星 Galaxy S22", specs:[["处理器","骁龙8 Gen 1"],["屏幕","6.1英寸 AMOLED 120Hz 2340x1080"],["8+128GB","LPDDR5 + UFS 3.1"],["8+256GB","LPDDR5 + UFS 3.1"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["电池","3700mAh"],["充电","25W有线 + 15W无线"],["其他","IP68防水"]]},
+            "三星S22+": {brand:"三星", name:"三星 Galaxy S22+", specs:[["处理器","骁龙8 Gen 1"],["屏幕","6.6英寸 AMOLED 120Hz 2340x1080"],["8+128GB","LPDDR5 + UFS 3.1"],["8+256GB","LPDDR5 + UFS 3.1"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["电池","4500mAh"],["充电","45W有线 + 15W无线"],["其他","IP68防水"]]},
+            "三星S22Ultra": {brand:"三星", name:"三星 Galaxy S22 Ultra", specs:[["处理器","骁龙8 Gen 1"],["屏幕","6.8英寸 AMOLED 2K 120Hz"],["8+128GB","LPDDR5 + UFS 3.1"],["12+256GB","LPDDR5 + UFS 3.1"],["12+512GB","LPDDR5 + UFS 3.1"],["12+1TB","LPDDR5 + UFS 3.1"],["后置相机","1.08亿主摄 + 1200万超广角 + 1000万3倍 + 1000万10倍潜望"],["前置相机","4000万"],["电池","5000mAh"],["充电","45W有线 + 15W无线"],["其他","S Pen内置、IP68防水"]]},
+            "三星S23": {brand:"三星", name:"三星 Galaxy S23", specs:[["处理器","骁龙8 Gen 2（超频版）"],["屏幕","6.1英寸 AMOLED 120Hz 2340x1080"],["8+128GB","LPDDR5X + UFS 3.1"],["8+256GB","LPDDR5X + UFS 4.0"],["8+512GB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["前置相机","1200万"],["电池","3900mAh"],["充电","25W有线 + 15W无线"],["其他","IP68防水、超声波指纹"]]},
+            "三星S23+": {brand:"三星", name:"三星 Galaxy S23+", specs:[["处理器","骁龙8 Gen 2（超频版）"],["屏幕","6.6英寸 AMOLED 120Hz 2340x1080"],["8+256GB","LPDDR5X + UFS 4.0"],["8+512GB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["前置相机","1200万"],["电池","4700mAh"],["充电","45W有线 + 15W无线"],["其他","IP68防水、超声波指纹"]]},
+            "三星S23Ultra": {brand:"三星", name:"三星 Galaxy S23 Ultra", specs:[["处理器","骁龙8 Gen 2（超频版）"],["屏幕","6.8英寸 AMOLED 2K 120Hz"],["8+256GB","LPDDR5X + UFS 4.0"],["12+256GB","LPDDR5X + UFS 4.0"],["12+512GB","LPDDR5X + UFS 4.0"],["12+1TB","LPDDR5X + UFS 4.0"],["后置相机","2亿主摄 + 1200万超广角 + 1000万3倍 + 1000万10倍潜望"],["前置相机","4000万"],["电池","5000mAh"],["充电","45W有线 + 15W无线"],["其他","S Pen内置、IP68防水"]]},
+            "三星S24": {brand:"三星", name:"三星 Galaxy S24", specs:[["处理器","骁龙8 Gen 3（超频版）"],["屏幕","6.2英寸 AMOLED 120Hz 2340x1080"],["8+128GB","LPDDR5X + UFS 4.0"],["8+256GB","LPDDR5X + UFS 4.0"],["8+512GB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["前置相机","1200万"],["电池","4000mAh"],["充电","25W有线 + 15W无线"],["其他","IP68防水、Galaxy AI"]]},
+            "三星S24+": {brand:"三星", name:"三星 Galaxy S24+", specs:[["处理器","骁龙8 Gen 3（超频版）"],["屏幕","6.7英寸 AMOLED 2K 120Hz"],["8+256GB","LPDDR5X + UFS 4.0"],["8+512GB","LPDDR5X + UFS 4.0"],["12+512GB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["前置相机","1200万"],["电池","4900mAh"],["充电","45W有线 + 15W无线"],["其他","IP68防水、Galaxy AI"]]},
+            "三星S24Ultra": {brand:"三星", name:"三星 Galaxy S24 Ultra", specs:[["处理器","骁龙8 Gen 3（超频版）"],["屏幕","6.8英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["12+512GB","LPDDR5X + UFS 4.0"],["12+1TB","LPDDR5X + UFS 4.0"],["后置相机","2亿主摄 + 1200万超广角 + 1000万3倍 + 5000万5倍潜望"],["前置相机","1200万"],["电池","5000mAh"],["充电","45W有线 + 15W无线"],["其他","S Pen内置、钛金属边框、IP68防水、Galaxy AI"]]},
+            // ========== 三星 Z Fold ==========
+            "三星ZFold3": {brand:"三星", name:"三星 Galaxy Z Fold3", specs:[["处理器","骁龙888"],["外屏","6.2英寸 AMOLED 120Hz"],["内屏","7.6英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5 + UFS 3.1"],["12+512GB","LPDDR5 + UFS 3.1"],["后置相机","1200万主摄 + 1200万超广角 + 1200万长焦"],["电池","4400mAh"],["充电","25W有线 + 11W无线"],["其他","折叠屏、IPX8防水、S Pen支持"]]},
+            "三星ZFold4": {brand:"三星", name:"三星 Galaxy Z Fold4", specs:[["处理器","骁龙8+ Gen 1"],["外屏","6.2英寸 AMOLED 120Hz"],["内屏","7.6英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 3.1"],["12+512GB","LPDDR5X + UFS 3.1"],["12+1TB","LPDDR5X + UFS 3.1"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["电池","4400mAh"],["充电","25W有线 + 15W无线"],["其他","折叠屏、IPX8防水、S Pen支持"]]},
+            "三星ZFold5": {brand:"三星", name:"三星 Galaxy Z Fold5", specs:[["处理器","骁龙8 Gen 2（超频版）"],["外屏","6.2英寸 AMOLED 120Hz"],["内屏","7.6英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["12+512GB","LPDDR5X + UFS 4.0"],["12+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["电池","4400mAh"],["充电","25W有线 + 15W无线"],["其他","折叠屏、IPX8防水、S Pen支持"]]},
+            // ========== 三星 Z Flip ==========
+            "三星ZFlip3": {brand:"三星", name:"三星 Galaxy Z Flip3", specs:[["处理器","骁龙888"],["外屏","1.9英寸 AMOLED"],["内屏","6.7英寸 AMOLED 120Hz"],["8+128GB","LPDDR5 + UFS 3.1"],["8+256GB","LPDDR5 + UFS 3.1"],["后置相机","1200万主摄 + 1200万超广角"],["电池","3300mAh"],["充电","15W有线 + 10W无线"],["其他","上下折叠、IPX8防水"]]},
+            "三星ZFlip4": {brand:"三星", name:"三星 Galaxy Z Flip4", specs:[["处理器","骁龙8+ Gen 1"],["外屏","1.9英寸 AMOLED"],["内屏","6.7英寸 AMOLED 120Hz"],["8+128GB","LPDDR5X + UFS 3.1"],["8+256GB","LPDDR5X + UFS 3.1"],["8+512GB","LPDDR5X + UFS 3.1"],["后置相机","1200万主摄 + 1200万超广角"],["电池","3700mAh"],["充电","25W有线 + 15W无线"],["其他","上下折叠、IPX8防水"]]},
+            "三星ZFlip5": {brand:"三星", name:"三星 Galaxy Z Flip5", specs:[["处理器","骁龙8 Gen 2（超频版）"],["外屏","3.4英寸 AMOLED"],["内屏","6.7英寸 AMOLED 120Hz"],["8+256GB","LPDDR5X + UFS 3.1"],["8+512GB","LPDDR5X + UFS 3.1"],["后置相机","1200万主摄 + 1200万超广角"],["电池","3700mAh"],["充电","25W有线 + 15W无线"],["其他","上下折叠、IPX8防水"]]},
+            // ========== 三星 A系列 ==========
+            "三星A54": {brand:"三星", name:"三星 Galaxy A54", specs:[["处理器","Exynos 1380"],["屏幕","6.4英寸 AMOLED 120Hz 2340x1080"],["8+128GB","LPDDR4X + UFS 2.2"],["8+256GB","LPDDR4X + UFS 2.2"],["后置相机","5000万主摄 + 1200万超广角 + 500万微距"],["电池","5000mAh"],["充电","25W有线"],["其他","IP67防水"]]},
+            "三星A55": {brand:"三星", name:"三星 Galaxy A55", specs:[["处理器","Exynos 1480"],["屏幕","6.6英寸 AMOLED 120Hz 2340x1080"],["8+128GB","LPDDR4X + UFS 2.2"],["8+256GB","LPDDR4X + UFS 2.2"],["后置相机","5000万主摄 + 1200万超广角 + 500万微距"],["电池","5000mAh"],["充电","25W有线"],["其他","IP67防水"]]},
+            // ========== 三星 W系列 ==========
+            "三星W23": {brand:"三星", name:"三星 W23 心系天下", specs:[["处理器","骁龙8+ Gen 1"],["外屏","6.2英寸 AMOLED 120Hz"],["内屏","7.6英寸 AMOLED 2K 120Hz"],["16+512GB","LPDDR5X + UFS 3.1"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["电池","4400mAh"],["充电","25W有线 + 15W无线"],["其他","折叠屏、心系天下定制、IPX8防水"]]},
+            "三星W24": {brand:"三星", name:"三星 W24 心系天下", specs:[["处理器","骁龙8 Gen 2（超频版）"],["外屏","6.2英寸 AMOLED 120Hz"],["内屏","7.6英寸 AMOLED 2K 120Hz"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["电池","4400mAh"],["充电","25W有线 + 15W无线"],["其他","折叠屏、心系天下定制、IPX8防水"]]},
+            "三星W25": {brand:"三星", name:"三星 W25 心系天下", specs:[["处理器","骁龙8 Gen 3（超频版）"],["外屏","6.3英寸 AMOLED 120Hz"],["内屏","7.6英寸 AMOLED 2K 120Hz"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 1200万超广角 + 1000万长焦"],["电池","4400mAh"],["充电","25W有线 + 15W无线"],["其他","折叠屏、心系天下定制、IPX8防水"]]},
+
+            // ========== 苹果 iPhone ==========
+            "iPhone13": {brand:"苹果", name:"苹果 iPhone 13", specs:[["处理器","A15 仿生芯片"],["屏幕","6.1英寸 OLED 60Hz 2532x1170"],["128GB","NVMe存储"],["256GB","NVMe存储"],["512GB","NVMe存储"],["后置相机","1200万主摄 + 1200万超广角"],["电池","3240mAh"],["充电","20W有线 + 15W MagSafe"],["其他","Lightning接口、IP68防水"]]},
+            "iPhone13Pro": {brand:"苹果", name:"苹果 iPhone 13 Pro", specs:[["处理器","A15 仿生芯片（5核GPU）"],["屏幕","6.1英寸 OLED 120Hz 2532x1170"],["128GB","NVMe存储"],["256GB","NVMe存储"],["512GB","NVMe存储"],["1TB","NVMe存储"],["后置相机","1200万主摄 + 1200万超广角 + 1200万3倍长焦"],["电池","3095mAh"],["充电","27W有线 + 15W MagSafe"],["其他","ProMotion、不锈钢边框、IP68防水"]]},
+            "iPhone13ProMax": {brand:"苹果", name:"苹果 iPhone 13 Pro Max", specs:[["处理器","A15 仿生芯片（5核GPU）"],["屏幕","6.7英寸 OLED 120Hz 2778x1284"],["128GB","NVMe存储"],["256GB","NVMe存储"],["512GB","NVMe存储"],["1TB","NVMe存储"],["后置相机","1200万主摄 + 1200万超广角 + 1200万3倍长焦"],["电池","4352mAh"],["充电","27W有线 + 15W MagSafe"],["其他","ProMotion、不锈钢边框、IP68防水"]]},
+            "iPhone14": {brand:"苹果", name:"苹果 iPhone 14", specs:[["处理器","A15 仿生芯片（5核GPU）"],["屏幕","6.1英寸 OLED 60Hz 2532x1170"],["128GB","NVMe存储"],["256GB","NVMe存储"],["512GB","NVMe存储"],["后置相机","1200万主摄 + 1200万超广角"],["电池","3279mAh"],["充电","20W有线 + 15W MagSafe"],["其他","Lightning、车祸检测、IP68防水"]]},
+            "iPhone14Pro": {brand:"苹果", name:"苹果 iPhone 14 Pro", specs:[["处理器","A16 仿生芯片"],["屏幕","6.1英寸 OLED 120Hz 2556x1179"],["128GB","NVMe存储"],["256GB","NVMe存储"],["512GB","NVMe存储"],["1TB","NVMe存储"],["后置相机","4800万主摄 + 1200万超广角 + 1200万3倍长焦"],["电池","3200mAh"],["充电","27W有线 + 15W MagSafe"],["其他","灵动岛、AOD显示、IP68防水"]]},
+            "iPhone14ProMax": {brand:"苹果", name:"苹果 iPhone 14 Pro Max", specs:[["处理器","A16 仿生芯片"],["屏幕","6.7英寸 OLED 120Hz 2796x1290"],["128GB","NVMe存储"],["256GB","NVMe存储"],["512GB","NVMe存储"],["1TB","NVMe存储"],["后置相机","4800万主摄 + 1200万超广角 + 1200万3倍长焦"],["电池","4323mAh"],["充电","27W有线 + 15W MagSafe"],["其他","灵动岛、AOD显示、IP68防水"]]},
+            "iPhone15": {brand:"苹果", name:"苹果 iPhone 15", specs:[["处理器","A16 仿生芯片"],["屏幕","6.1英寸 OLED 60Hz 2556x1179"],["128GB","NVMe存储"],["256GB","NVMe存储"],["512GB","NVMe存储"],["后置相机","4800万主摄 + 1200万超广角"],["电池","3349mAh"],["充电","20W有线 + 15W MagSafe"],["其他","USB-C接口、灵动岛、IP68防水"]]},
+            "iPhone15Plus": {brand:"苹果", name:"苹果 iPhone 15 Plus", specs:[["处理器","A16 仿生芯片"],["屏幕","6.7英寸 OLED 60Hz 2796x1290"],["128GB","NVMe存储"],["256GB","NVMe存储"],["512GB","NVMe存储"],["后置相机","4800万主摄 + 1200万超广角"],["电池","4383mAh"],["充电","20W有线 + 15W MagSafe"],["其他","USB-C接口、灵动岛、IP68防水"]]},
+            "iPhone15Pro": {brand:"苹果", name:"苹果 iPhone 15 Pro", specs:[["处理器","A17 Pro 仿生芯片（3nm）"],["屏幕","6.1英寸 OLED 120Hz 2556x1179"],["128GB","NVMe存储"],["256GB","NVMe存储"],["512GB","NVMe存储"],["1TB","NVMe存储"],["后置相机","4800万主摄 + 1200万超广角 + 1200万3倍长焦"],["电池","3274mAh"],["充电","27W有线 + 15W MagSafe"],["其他","钛金属边框、USB-C 3.0、Action按钮、IP68防水"]]},
+            "iPhone15ProMax": {brand:"苹果", name:"苹果 iPhone 15 Pro Max", specs:[["处理器","A17 Pro 仿生芯片（3nm）"],["屏幕","6.7英寸 OLED 120Hz 2796x1290"],["256GB","NVMe存储"],["512GB","NVMe存储"],["1TB","NVMe存储"],["后置相机","4800万主摄 + 1200万超广角 + 1200万5倍潜望长焦"],["电池","4422mAh"],["充电","27W有线 + 15W MagSafe"],["其他","钛金属边框、USB-C 3.0、IP68防水"]]},
+            // ========== 苹果 Mac ==========
+            "MacBookAirM2": {brand:"苹果", name:"苹果 MacBook Air 13英寸 (M2)", specs:[["处理器","Apple M2（8核CPU+8核GPU）"],["屏幕","13.6英寸 Liquid Retina 2560x1664"],["内存","8GB/16GB/24GB 统一内存"],["存储","256GB/512GB/1TB/2TB SSD"],["电池","52.6Wh"],["充电","30W/35W USB-C"],["其他","无风扇设计、MagSafe 3、触控ID"]]},
+            "MacBookPro14M3": {brand:"苹果", name:"苹果 MacBook Pro 14英寸 (M3)", specs:[["处理器","Apple M3 / M3 Pro / M3 Max"],["屏幕","14.2英寸 Liquid Retina XDR 120Hz 3024x1964"],["内存","8GB/18GB/36GB 统一内存"],["存储","512GB/1TB/2TB SSD"],["电池","72.4Wh"],["充电","MagSafe 3 / USB-C 70W"],["其他","Touch ID、雷雳4、HDMI、SD卡槽"]]},
+            "MacBookPro16M3": {brand:"苹果", name:"苹果 MacBook Pro 16英寸 (M3)", specs:[["处理器","Apple M3 Pro / M3 Max"],["屏幕","16.2英寸 Liquid Retina XDR 120Hz 3456x2234"],["内存","18GB/36GB/48GB/64GB 统一内存"],["存储","512GB/1TB/2TB/4TB/8TB SSD"],["电池","100Wh"],["充电","MagSafe 3 / USB-C 96W/140W"],["其他","Touch ID、雷雳4、HDMI、SD卡槽"]]},
+            "iPadPro": {brand:"苹果", name:"苹果 iPad Pro 12.9英寸 (M2)", specs:[["处理器","Apple M2"],["屏幕","12.9英寸 Liquid Retina XDR 120Hz 2732x2048"],["内存","8GB/16GB 统一内存"],["存储","128GB/256GB/512GB/1TB/2TB"],["电池","40.88Wh"],["充电","USB-C 20W"],["其他","ProMotion、Face ID、Apple Pencil 2、妙控键盘"]]},
+
+            // ========== 小米 ==========
+            "小米13": {brand:"小米", name:"小米 13", specs:[["处理器","骁龙8 Gen 2"],["屏幕","6.36英寸 AMOLED 120Hz 2400x1080"],["8+128GB","LPDDR5X + UFS 4.0"],["8+256GB","LPDDR5X + UFS 4.0"],["12+256GB","LPDDR5X + UFS 4.0"],["12+512GB","LPDDR5X + UFS 4.0"],["后置相机","5400万徕卡主摄 + 1200万超广角 + 1000万长焦"],["电池","4500mAh"],["充电","67W有线 + 50W无线"],["其他","IP68防水、徕卡光学"]]},
+            "小米13Pro": {brand:"小米", name:"小米 13 Pro", specs:[["处理器","骁龙8 Gen 2"],["屏幕","6.73英寸 AMOLED 2K 120Hz"],["8+128GB","LPDDR5X + UFS 4.0"],["8+256GB","LPDDR5X + UFS 4.0"],["12+256GB","LPDDR5X + UFS 4.0"],["12+512GB","LPDDR5X + UFS 4.0"],["后置相机","1英寸徕卡主摄 + 5000万超广角 + 5000万长焦"],["电池","4820mAh"],["充电","120W有线 + 50W无线"],["其他","IP68防水、徕卡光学"]]},
+            "小米14": {brand:"小米", name:"小米 14", specs:[["处理器","骁龙8 Gen 3"],["屏幕","6.36英寸 AMOLED 120Hz 2670x1200"],["8+256GB","LPDDR5X + UFS 4.0"],["12+256GB","LPDDR5X + UFS 4.0"],["12+512GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万徕卡主摄 + 5000万超广角 + 5000万3.2倍长焦"],["电池","4610mAh"],["充电","90W有线 + 50W无线"],["其他","IP68防水、徕卡光学、澎湃OS"]]},
+            "小米14Pro": {brand:"小米", name:"小米 14 Pro", specs:[["处理器","骁龙8 Gen 3"],["屏幕","6.73英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万徕卡主摄 + 5000万超广角 + 5000万3.2倍长焦"],["电池","4880mAh"],["充电","120W有线 + 50W无线"],["其他","IP68防水、徕卡光学、无级可变光圈"]]},
+            "小米14Ultra": {brand:"小米", name:"小米 14 Ultra", specs:[["处理器","骁龙8 Gen 3"],["屏幕","6.73英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","1英寸徕卡主摄 + 5000万超广角 + 5000万3.2倍 + 5000万5倍潜望"],["电池","5300mAh"],["充电","90W有线 + 80W无线"],["其他","IP68防水、徕卡光学、钛金属框架"]]},
+            "红米K70": {brand:"小米", name:"红米 K70", specs:[["处理器","骁龙8 Gen 2"],["屏幕","6.67英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 800万超广角 + 200万微距"],["电池","5000mAh"],["充电","120W有线"],["其他","金属中框、澎湃OS"]]},
+
+            // ========== 华为 ==========
+            "华为Mate60": {brand:"华为", name:"华为 Mate 60", specs:[["处理器","麒麟9000S"],["屏幕","6.69英寸 OLED 120Hz 2688x1216"],["12+256GB","LPDDR5X + UFS 3.1"],["12+512GB","LPDDR5X + UFS 3.1"],["12+1TB","LPDDR5X + UFS 3.1"],["后置相机","5000万主摄 + 1200万超广角 + 1200万5倍潜望"],["电池","4750mAh"],["充电","66W有线 + 50W无线"],["其他","卫星消息、IP68防水、鸿蒙系统"]]},
+            "华为Mate60Pro": {brand:"华为", name:"华为 Mate 60 Pro", specs:[["处理器","麒麟9000S"],["屏幕","6.82英寸 OLED 120Hz 2720x1260"],["12+256GB","LPDDR5X + UFS 3.1"],["12+512GB","LPDDR5X + UFS 3.1"],["12+1TB","LPDDR5X + UFS 3.1"],["后置相机","5000万主摄 + 1200万超广角 + 4800万3.5倍长焦"],["电池","5000mAh"],["充电","88W有线 + 50W无线"],["其他","卫星通话、IP68防水、鸿蒙系统"]]},
+            "华为Mate60Pro+": {brand:"华为", name:"华为 Mate 60 Pro+", specs:[["处理器","麒麟9000S"],["屏幕","6.82英寸 OLED 120Hz 2720x1260"],["16+512GB","LPDDR5X + UFS 3.1"],["16+1TB","LPDDR5X + UFS 3.1"],["后置相机","4800万主摄 + 4000万超广角 + 4800万3.5倍 + 4800万10倍潜望"],["电池","5000mAh"],["充电","88W有线 + 50W无线"],["其他","卫星通话、IP68防水、鸿蒙系统、玄武架构"]]},
+            "华为P60Pro": {brand:"华为", name:"华为 P60 Pro", specs:[["处理器","骁龙8+ Gen 1（4G）"],["屏幕","6.67英寸 OLED 120Hz 2700x1220"],["8+256GB","LPDDR5X + UFS 3.1"],["12+256GB","LPDDR5X + UFS 3.1"],["12+512GB","LPDDR5X + UFS 3.1"],["后置相机","4800万主摄 + 1300万超广角 + 4800万3.5倍长焦"],["电池","4815mAh"],["充电","88W有线 + 50W无线"],["其他","IP68防水、鸿蒙系统、可变光圈"]]},
+
+            // ========== OPPO ==========
+            "OPPOFindX6Pro": {brand:"OPPO", name:"OPPO Find X6 Pro", specs:[["处理器","骁龙8 Gen 2"],["屏幕","6.82英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","1英寸主摄 + 5000万超广角 + 5000万3倍长焦"],["电池","5000mAh"],["充电","100W有线 + 50W无线"],["其他","IP68防水、哈苏影像"]]},
+            "OPPOFindX7": {brand:"OPPO", name:"OPPO Find X7", specs:[["处理器","天玑9300"],["屏幕","6.78英寸 AMOLED 1.5K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 5000万超广角 + 6400万3倍长焦"],["电池","5000mAh"],["充电","100W有线"],["其他","IP65防水、哈苏影像、AI手机"]]},
+            "OPPOFindX7Ultra": {brand:"OPPO", name:"OPPO Find X7 Ultra", specs:[["处理器","骁龙8 Gen 3"],["屏幕","6.82英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","1英寸主摄 + 5000万超广角 + 5000万3倍 + 5000万6倍潜望"],["电池","5000mAh"],["充电","100W有线 + 50W无线"],["其他","IP68防水、哈苏影像、双潜望长焦"]]},
+
+            // ========== vivo ==========
+            "vivoX90Pro+": {brand:"vivo", name:"vivo X90 Pro+", specs:[["处理器","骁龙8 Gen 2"],["屏幕","6.78英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["12+512GB","LPDDR5X + UFS 4.0"],["后置相机","1英寸主摄 + 5000万超广角 + 5000万2倍 + 6400万3.5倍"],["电池","4700mAh"],["充电","80W有线 + 50W无线"],["其他","IP68防水、蔡司影像、V2芯片"]]},
+            "vivoX100": {brand:"vivo", name:"vivo X100", specs:[["处理器","天玑9300"],["屏幕","6.78英寸 AMOLED 1.5K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 5000万超广角 + 6400万3倍长焦"],["电池","5000mAh"],["充电","120W有线"],["其他","IP68防水、蔡司影像、V3芯片"]]},
+            "vivoX100Pro": {brand:"vivo", name:"vivo X100 Pro", specs:[["处理器","天玑9300"],["屏幕","6.78英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","1英寸主摄 + 5000万超广角 + 5000万3倍长焦"],["电池","5400mAh"],["充电","100W有线 + 50W无线"],["其他","IP68防水、蔡司影像、V3芯片、蓝海电池"]]},
+
+            // ========== 一加 ==========
+            "一加11": {brand:"一加", name:"一加 11", specs:[["处理器","骁龙8 Gen 2"],["屏幕","6.7英寸 AMOLED 2K 120Hz"],["8+128GB","LPDDR5X + UFS 4.0"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 3200万人像 + 4800万超广角"],["电池","5000mAh"],["充电","100W有线"],["其他","哈苏影像、振动马达"]]},
+            "一加12": {brand:"一加", name:"一加 12", specs:[["处理器","骁龙8 Gen 3"],["屏幕","6.82英寸 AMOLED 2K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["24+1TB","LPDDR5X + UFS 4.0"],["后置相机","1英寸主摄 + 6400万超广角 + 6400万3倍长焦"],["电池","5400mAh"],["充电","100W有线 + 50W无线"],["其他","IP65防水、哈苏影像、24GB大内存"]]},
+            "一加Ace3": {brand:"一加", name:"一加 Ace 3", specs:[["处理器","骁龙8 Gen 2"],["屏幕","6.78英寸 AMOLED 1.5K 120Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 800万超广角 + 200万微距"],["电池","5500mAh"],["充电","100W有线"],["其他","金属中框、红外、NFC"]]},
+
+            // ========== 真我 ==========
+            "真我GT5": {brand:"真我", name:"真我 GT5", specs:[["处理器","骁龙8 Gen 2"],["屏幕","6.74英寸 AMOLED 1.5K 144Hz"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["24+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 800万超广角 + 200万微距"],["电池","5240mAh"],["充电","150W有线"],["其他","240W版本可选、RGB灯效"]]},
+            "真我GTNeo6": {brand:"真我", name:"真我 GT Neo6", specs:[["处理器","骁龙8s Gen 3"],["屏幕","6.78英寸 AMOLED 1.5K 120Hz"],["8+256GB","LPDDR5X + UFS 4.0"],["12+256GB","LPDDR5X + UFS 4.0"],["16+256GB","LPDDR5X + UFS 4.0"],["16+512GB","LPDDR5X + UFS 4.0"],["16+1TB","LPDDR5X + UFS 4.0"],["后置相机","5000万主摄 + 800万超广角 + 200万微距"],["电池","5500mAh"],["充电","120W有线"],["其他","6000nit峰值亮度、NFC"]]}
+        };
+
+        // 按品牌筛选
+        function filterBrand(brand) {
+            var listDiv = document.getElementById('brandList');
+            var title = document.getElementById('brandTitle');
+            var models = document.getElementById('brandModels');
+            document.getElementById('phoneResult').style.display = 'none';
+            title.textContent = brand + ' 已收录机型';
+            models.innerHTML = '';
+            var count = 0;
+            for (var key in phoneDB) {
+                if (phoneDB[key].brand === brand) {
+                    count++;
+                    var btn = document.createElement('button');
+                    btn.className = 'search-btn';
+                    btn.style.cssText = 'padding:8px 16px; font-size:14px; margin:5px;';
+                    btn.textContent = phoneDB[key].name;
+                    btn.onclick = (function(k){ return function(){ showPhone(k); }; })(key);
+                    models.appendChild(btn);
+                }
+            }
+            if (count === 0) {
+                models.innerHTML = '<div style="color:#888;">该品牌机型正在陆续补充中...</div>';
+            }
+            listDiv.style.display = 'block';
+        }
+
+        // 显示指定机型详情
+        function showPhone(key) {
+            var found = phoneDB[key];
+            if (found) {
+                document.getElementById('resultName').textContent = found.name;
+                var html = '';
+                found.specs.forEach(function(item) {
+                    html += '<div><strong style="color:#00d4ff;">' + item[0] + '：</strong>' + item[1] + '</div>';
+                });
+                document.getElementById('resultSpecs').innerHTML = html;
+                document.getElementById('phoneResult').style.display = 'block';
+                document.getElementById('brandList').style.display = 'none';
+            }
+        }
+
+        // 搜索
+        function searchPhone() {
+            var keyword = document.getElementById('phoneInput').value.trim();
+            if (!keyword) return;
+            document.getElementById('brandList').style.display = 'none';
+            var found = null;
+            for (var key in phoneDB) {
+                if (key.toLowerCase().indexOf(keyword.toLowerCase()) !== -1 ||
+                    phoneDB[key].name.toLowerCase().indexOf(keyword.toLowerCase()) !== -1) {
+                    found = phoneDB[key]; break;
+                }
+            }
+            if (found) {
+                document.getElementById('resultName').textContent = found.name;
+                var html = '';
+                found.specs.forEach(function(item) {
+                    html += '<div><strong style="color:#00d4ff;">' + item[0] + '：</strong>' + item[1] + '</div>';
+                });
+                document.getElementById('resultSpecs').innerHTML = html;
+            } else {
+                document.getElementById('resultName').textContent = '未找到 "' + keyword + '"';
+                document.getElementById('resultSpecs').innerHTML = '<div style="color:#888;">该机型暂未收录。已收录' + Object.keys(phoneDB).length + '款机型，点上方品牌卡片查看全部。</div>';
+            }
+            document.getElementById('phoneResult').style.display = 'block';
+        }
+
+        // 音频上下文（悬停音效用）
+        var audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+        function playHoverSound() {
+            try {
+                var ctx = getAudioCtx();
+                var osc = ctx.createOscillator();
+                var gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0, ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15);
+            } catch(e) {}
+        }
+
+        // 开机音效
+        function playBootSound() {
+            try {
+                var audio = document.getElementById('bootSound');
+                audio.currentTime = 0; audio.volume = 0.8; audio.play();
+            } catch(e) {}
+        }
+
+        // 页面加载
+        window.addEventListener('load', function() {
+            document.querySelectorAll('.card, .brand-card').forEach(function(card) {
+                card.addEventListener('mouseenter', playHoverSound);
+            });
+        });
+
+        // 点击进入
+        var booted = false;
+        document.getElementById('boot-screen').addEventListener('click', function() {
+            if (booted) return; booted = true;
+            playBootSound();
+            var self = this;
+            setTimeout(function() {
+                self.classList.add('fade-out');
+                document.getElementById('main-content').classList.add('show');
+                document.querySelectorAll('.category').forEach(function(cat, i) {
+                    setTimeout(function() { cat.classList.add('show'); }, 200 + i * 150);
+                });
+            }, 300);
+        });
+    </script>
+</body>
+</html>
