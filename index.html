@@ -23,7 +23,7 @@
         /* ===== 动态背景（Canvas粒子宇宙） ===== */
         #bgCanvas { display: block; }
 
-        /* ===== 开机动画 ===== */
+        /* ===== 开机动画 - 纯血鸿蒙 ===== */
         #boot-screen {
             position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
@@ -32,33 +32,96 @@
             align-items: center; justify-content: center;
             z-index: 9999;
             transition: opacity 0.8s ease;
+            overflow: hidden;
         }
         #boot-screen.fade-out { opacity: 0; pointer-events: none; }
-        .win-logo {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 5px; width: 72px; height: 72px;
-            margin-bottom: 60px;
-            animation: winLogoIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0; transform: scale(0.8);
+        /* HUAWEI文字logo - 第一阶段 */
+        .huawei-text {
+            color: #fff;
+            font-size: 38px;
+            font-weight: 300;
+            letter-spacing: 12px;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            animation: huaweiShow 2.2s ease forwards;
+            text-shadow: 0 0 30px rgba(255,255,255,0.3);
         }
-        .win-logo div { background: #fff; border-radius: 1px; }
-        @keyframes winLogoIn {
-            0% { opacity: 0; transform: scale(0.5); }
-            50% { opacity: 1; transform: scale(1.05); }
-            100% { opacity: 1; transform: scale(1); }
+        @keyframes huaweiShow {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            15% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            65% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
         }
-        .boot-ring {
-            width: 36px; height: 36px;
-            border: 3px solid rgba(255,255,255,0.15);
-            border-top-color: #fff;
+        /* HarmonyOS文字容器 - 第二阶段 */
+        .hm-text-wrap {
+            position: relative;
+            opacity: 0;
+            animation: textWrapIn 0.3s ease 2.3s forwards;
+        }
+        @keyframes textWrapIn { to { opacity: 1; } }
+        .hm-text {
+            color: rgba(255,255,255,0.08);
+            font-size: 34px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            font-family: "HarmonyOS Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+            position: relative;
+            display: inline-block;
+        }
+        .hm-text span {
+            display: inline-block;
+            transition: color 0.3s ease;
+        }
+        /* 字母亮起：O最先，然后从左往右，S最后 */
+        .hm-text span:nth-child(8) { animation: letterOn 0.3s ease 2.5s forwards; color: rgba(255,255,255,0.08); }
+        .hm-text span:nth-child(1) { animation: letterOn 0.3s ease 2.65s forwards; color: rgba(255,255,255,0.08); }
+        .hm-text span:nth-child(2) { animation: letterOn 0.3s ease 2.77s forwards; color: rgba(255,255,255,0.08); }
+        .hm-text span:nth-child(3) { animation: letterOn 0.3s ease 2.89s forwards; color: rgba(255,255,255,0.08); }
+        .hm-text span:nth-child(4) { animation: letterOn 0.3s ease 3.01s forwards; color: rgba(255,255,255,0.08); }
+        .hm-text span:nth-child(5) { animation: letterOn 0.3s ease 3.13s forwards; color: rgba(255,255,255,0.08); }
+        .hm-text span:nth-child(6) { animation: letterOn 0.3s ease 3.25s forwards; color: rgba(255,255,255,0.08); }
+        .hm-text span:nth-child(7) { animation: letterOn 0.3s ease 3.37s forwards; color: rgba(255,255,255,0.08); }
+        .hm-text span:nth-child(9) { animation: letterOn 0.3s ease 3.6s forwards; color: rgba(255,255,255,0.08); }
+        @keyframes letterOn { to { color: #fff; } }
+        /* 发光圆环：从O位置变大出现，然后往右扫过 */
+        .hm-glow {
+            position: absolute;
+            top: 50%;
+            left: 61%;
+            transform: translateY(-50%) scale(0);
+            width: 52px; height: 52px;
+            border: 4px solid #fff;
             border-radius: 50%;
-            animation: ringSpin 1.2s linear infinite;
+            box-shadow: 0 0 25px rgba(255,255,255,0.9), 0 0 50px rgba(255,255,255,0.5);
+            opacity: 0;
+            animation: glowSweep 1.4s cubic-bezier(0.45, 0, 0.55, 1) 2.45s forwards;
+            pointer-events: none;
         }
-        @keyframes ringSpin { to { transform: rotate(360deg); } }
+        @keyframes glowSweep {
+            0% { left: 61%; transform: translateY(-50%) scale(0); opacity: 0; }
+            12% { transform: translateY(-50%) scale(1); opacity: 1; }
+            30% { left: 61%; transform: translateY(-50%) scale(1); opacity: 1; }
+            100% { left: 115%; transform: translateY(-50%) scale(1); opacity: 0; }
+        }
+        /* O下方蓝色条 - 静止不动 */
+        .hm-loader-dot {
+            position: absolute;
+            bottom: -10px;
+            left: 61%;
+            width: 22px; height: 4px;
+            background: #007dff;
+            border-radius: 2px;
+            opacity: 0;
+            animation: loaderShow 0.3s ease 3.8s forwards;
+        }
+        @keyframes loaderShow { to { opacity: 1; } }
         .boot-hint {
-            position: absolute; bottom: 80px;
-            color: rgba(255,255,255,0.6); font-size: 14px;
-            animation: hintBlink 1.5s ease-in-out infinite;
+            position: absolute; bottom: 65px;
+            color: rgba(255,255,255,0.5); font-size: 14px;
+            opacity: 0;
+            animation: hintBlink 1.5s ease-in-out 4s infinite;
         }
         @keyframes hintBlink { 0%,100%{opacity:0.3;} 50%{opacity:0.8;} }
 
@@ -140,6 +203,27 @@
             transition: opacity 0.3s;
         }
         .card a:hover { opacity: 0.8; }
+        .dl-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .dl-btn {
+            display: block !important;
+            text-align: center;
+            padding: 12px 16px !important;
+            font-size: 0.88em !important;
+            border-radius: 8px !important;
+            background: linear-gradient(135deg, #1a2a3a, #0f1a26) !important;
+            border: 1px solid rgba(0,212,255,0.3) !important;
+            transition: all 0.3s !important;
+        }
+        .dl-btn:hover {
+            background: linear-gradient(135deg, #00d4ff, #7b2ff7) !important;
+            border-color: transparent !important;
+            transform: translateY(-2px);
+        }
         .badge {
             display: inline-block; padding: 3px 10px;
             border-radius: 4px; font-size: 0.7em;
@@ -193,13 +277,16 @@
     <!-- 动态背景 -->
     <canvas id="bgCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;"></canvas>
 
-    <!-- 音效 -->
-    <audio id="bootSound" src="logon.wav" preload="auto"></audio>
-
-    <!-- 开机动画 -->
+    <!-- 开机动画 - 纯血鸿蒙 -->
     <div id="boot-screen">
-        <div class="win-logo"><div></div><div></div><div></div><div></div></div>
-        <div class="boot-ring"></div>
+        <div class="huawei-text">HUAWEI</div>
+        <div class="hm-text-wrap">
+            <div class="hm-glow"></div>
+            <div class="hm-text">
+                <span>H</span><span>a</span><span>r</span><span>m</span><span>o</span><span>n</span><span>y</span><span>O</span><span>S</span>
+                <span class="hm-loader-dot"></span>
+            </div>
+        </div>
         <div class="boot-hint">点击任意处进入</div>
     </div>
 
@@ -332,120 +419,28 @@
 
                         <!-- 安卓Root工具大全 -->
         <div class="category">
-            <h2 class="category-title">安卓Root工具大全（安卓4 - 安卓16，点击工具名直达下载）</h2>
+            <h2 class="category-title">安卓Root工具大全（安卓4 - 安卓16，点击按钮直接下载）</h2>
             <div class="card-grid">
-
-                <div class="card">
-                    <h3>安卓4.x 专用Root工具</h3>
-                    <p>适用于安卓4.0-4.4（冰淇淋三明治/果冻豆/奇巧）</p>
-                    <ul>
-                        <li><a href="https://supersu.en.uptodown.com/android/download" target="_blank"><b>SuperSU</b></a> - 经典root权限管理，安卓4首选</li>
-                        <li><a href="https://kingroot.net/" target="_blank"><b>KingRoot</b></a> - 一键root，支持大量老机型</li>
-                        <li><a href="https://forum.xda-developers.com/t/app-framaroot-one-click-root-for-several-devices.2130256/" target="_blank"><b>Framaroot</b></a> - 本地漏洞一键root，无需电脑</li>
-                        <li><a href="https://towelroot.com/" target="_blank"><b>Towelroot</b></a> - 一键root，支持三星老机型</li>
-                        <li><a href="https://www.mgyun.com/" target="_blank"><b>Root大师</b></a> - 国产一键root，支持安卓4</li>
-                        <li><a href="https://root.360.cn/" target="_blank"><b>360超级Root</b></a> - 国产一键root</li>
-                        <li><a href="https://twrp.me/Devices/" target="_blank"><b>TWRP Recovery</b></a> - 老版本第三方recovery</li>
-                        <li><b>电脑端：</b><a href="https://developer.android.com/studio/releases/platform-tools" target="_blank">ADB/Fastboot</a>、<a href="https://odindownload.com/" target="_blank">ODIN(三星)</a>、<a href="https://spflashtool.com/" target="_blank">SP Flash Tool(联发科)</a></li>
-                    </ul>
+                <div class="card" style="grid-column: 1 / -1;">
+                    <h3>全版本通用Root工具</h3>
+                    <p>不分安卓版本，点击按钮直接下载最新版</p>
+                    <div class="dl-grid">
+                        <a href="https://github.com/topjohnwu/Magisk/releases/latest/download/Magisk.apk" class="dl-btn" target="_blank">Magisk 最新版</a>
+                        <a href="https://github.com/HuskyDG/magisk-files/releases/latest/download/app-release.apk" class="dl-btn" target="_blank">Kitsune Mask</a>
+                        <a href="https://github.com/topjohnwu/Magisk/releases/download/v23.0/Magisk-v23.0.apk" class="dl-btn" target="_blank">Magisk v23（安卓5-6）</a>
+                        <a href="https://dl.google.com/android/repository/platform-tools-latest-windows.zip" class="dl-btn" target="_blank">ADB & Fastboot</a>
+                        <a href="#" class="dl-btn btn-lsposed" target="_blank">LSPosed 框架</a>
+                        <a href="#" class="dl-btn btn-shamiko" target="_blank">Shamiko 隐藏</a>
+                        <a href="#" class="dl-btn btn-zygisk" target="_blank">Zygisk Next</a>
+                        <a href="#" class="dl-btn btn-pif" target="_blank">Play Integrity Fix</a>
+                        <a href="https://supersu.en.uptodown.com/android/download" class="dl-btn" target="_blank">SuperSU</a>
+                        <a href="https://twrp.me/Devices/" class="dl-btn" target="_blank">TWRP Recovery</a>
+                        <a href="https://odindownload.com/" class="dl-btn" target="_blank">ODIN（三星）</a>
+                        <a href="https://spflashtool.com/" class="dl-btn" target="_blank">SP Flash Tool</a>
+                        <a href="https://xiaomiflash.com/" class="dl-btn" target="_blank">小米刷机工具</a>
+                        <a href="https://qpst.app/" class="dl-btn" target="_blank">高通QPST</a>
+                    </div>
                 </div>
-
-                <div class="card">
-                    <h3>安卓5.x-6.x Root工具</h3>
-                    <p>适用于安卓5.0-6.0（棒棒糖/棉花糖）</p>
-                    <ul>
-                        <li><a href="https://github.com/topjohnwu/Magisk/releases/tag/v23.0" target="_blank"><b>Magisk v23</b></a> - 最后支持安卓5的版本</li>
-                        <li><a href="https://supersu.en.uptodown.com/android/download" target="_blank"><b>SuperSU</b></a> - 经典稳定，继续支持</li>
-                        <li><a href="https://kingroot.net/" target="_blank"><b>KingRoot</b></a> - 一键root，支持安卓5-6</li>
-                        <li><a href="https://github.com/phhusson/Superuser/releases" target="_blank"><b>phh SuperUser</b></a> - 开源root管理</li>
-                        <li><a href="https://twrp.me/Devices/" target="_blank"><b>TWRP Recovery</b></a> - 第三方recovery，卡刷root</li>
-                        <li><b>电脑端：</b><a href="https://developer.android.com/studio/releases/platform-tools" target="_blank">ADB/Fastboot</a>、<a href="https://odindownload.com/" target="_blank">ODIN</a>、<a href="https://spflashtool.com/" target="_blank">SP Flash Tool</a>、<a href="https://xiaomiflash.com/" target="_blank">小米刷机工具</a></li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>安卓7.x-8.x Root工具</h3>
-                    <p>适用于安卓7.0-8.1（牛轧糖/奥利奥）</p>
-                    <ul>
-                        <li><a href="https://github.com/topjohnwu/Magisk/releases" target="_blank"><b>Magisk</b></a> - 主流root方案，systemless</li>
-                        <li><a href="https://supersu.en.uptodown.com/android/download/2.82" target="_blank"><b>SuperSU 2.82</b></a> - 最终版，最后支持到安卓8</li>
-                        <li><a href="https://twrp.me/Devices/" target="_blank"><b>TWRP Recovery</b></a> - 刷入Magisk必备</li>
-                        <li><a href="https://play.google.com/store/apps/details?id=stericson.busybox" target="_blank"><b>BusyBox</b></a> - Linux工具集，root后必备</li>
-                        <li><b>电脑端：</b><a href="https://developer.android.com/studio/releases/platform-tools" target="_blank">ADB/Fastboot</a>、<a href="https://odindownload.com/" target="_blank">ODIN</a>、<a href="https://spflashtool.com/" target="_blank">SP Flash Tool</a>、<a href="https://qpst.app/" target="_blank">QPST(高通)</a></li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>安卓9-10 Root工具</h3>
-                    <p>适用于安卓9.0-10（派/安卓Q）</p>
-                    <ul>
-                        <li><a href="https://github.com/topjohnwu/Magisk/releases" target="_blank"><b>Magisk</b></a> - 唯一主流方案，支持Zygisk</li>
-                        <li><a href="https://twrp.me/Devices/" target="_blank"><b>TWRP Recovery</b></a> - 部分机型支持</li>
-                        <li><a href="https://github.com/LSPosed/LSPosed/releases" target="_blank"><b>LSPosed</b></a> - Xposed框架继任者，需Zygisk</li>
-                        <li><a href="https://github.com/LSPosed/LSPosed.github.io/releases" target="_blank"><b>Shamiko</b></a> - 隐藏root检测</li>
-                        <li><a href="https://github.com/HuskyDG/magisk-files/releases" target="_blank"><b>Magisk Delta</b></a> - Magisk增强版</li>
-                        <li><b>电脑端：</b><a href="https://developer.android.com/studio/releases/platform-tools" target="_blank">ADB/Fastboot</a>、<a href="https://odindownload.com/" target="_blank">ODIN</a>、<a href="https://spflashtool.com/" target="_blank">SP Flash Tool</a>、<a href="https://qpst.app/" target="_blank">QPST</a></li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>安卓11-12 Root工具</h3>
-                    <p>适用于安卓11-12（R/S）</p>
-                    <ul>
-                        <li><a href="https://github.com/topjohnwu/Magisk/releases" target="_blank"><b>Magisk</b></a> - 支持Zygisk Next</li>
-                        <li><a href="https://github.com/HuskyDG/magisk-files/releases" target="_blank"><b>Magisk Delta</b></a> - 增强版，更好的隐藏</li>
-                        <li><a href="https://github.com/LSPosed/LSPosed/releases" target="_blank"><b>LSPosed</b></a> - Xposed模块框架</li>
-                        <li><a href="https://github.com/LSPosed/LSPosed.github.io/releases" target="_blank"><b>Shamiko</b></a> - 隐藏root，过银行/游戏检测</li>
-                        <li><a href="https://twrp.me/Devices/" target="_blank"><b>TWRP Recovery</b></a> - 部分新机型支持</li>
-                        <li><a href="https://github.com/Dr-TSNG/ZygiskNext/releases" target="_blank"><b>Zygisk Next</b></a> - Zygisk增强版</li>
-                        <li><b>电脑端：</b><a href="https://developer.android.com/studio/releases/platform-tools" target="_blank">ADB/Fastboot</a>、<a href="https://odindownload.com/" target="_blank">ODIN</a>、<a href="https://spflashtool.com/" target="_blank">SP Flash Tool</a>、<a href="https://qpst.app/" target="_blank">QPST</a></li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>安卓13-14 Root工具</h3>
-                    <p>适用于安卓13-14（提拉米苏/倒置蛋糕）</p>
-                    <ul>
-                        <li><a href="https://github.com/topjohnwu/Magisk/releases" target="_blank"><b>Magisk</b></a> - 持续更新支持</li>
-                        <li><a href="https://github.com/HuskyDG/magisk-files/releases" target="_blank"><b>Kitsune Mask</b></a> - 原Magisk Delta，最强隐藏</li>
-                        <li><a href="https://github.com/LSPosed/LSPosed/releases" target="_blank"><b>LSPosed</b></a> - Xposed框架</li>
-                        <li><a href="https://github.com/LSPosed/LSPosed.github.io/releases" target="_blank"><b>Shamiko</b></a> - root隐藏必备</li>
-                        <li><a href="https://github.com/chiteroman/PlayIntegrityFix/releases" target="_blank"><b>Play Integrity Fix</b></a> - 过谷歌Play完整性检测</li>
-                        <li><a href="https://twrp.me/Devices/" target="_blank"><b>TWRP Recovery</b></a> - 部分旗舰支持</li>
-                        <li><b>电脑端：</b><a href="https://developer.android.com/studio/releases/platform-tools" target="_blank">ADB/Fastboot</a>、<a href="https://odindownload.com/" target="_blank">ODIN</a>、<a href="https://spflashtool.com/" target="_blank">SP Flash Tool</a>、<a href="https://qpst.app/" target="_blank">QPST</a></li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>安卓15-16 Root工具</h3>
-                    <p>适用于安卓15-16（香草冰淇淋/最新版）</p>
-                    <ul>
-                        <li><a href="https://github.com/topjohnwu/Magisk/releases" target="_blank"><b>Magisk</b></a> - 持续适配新系统</li>
-                        <li><a href="https://github.com/HuskyDG/magisk-files/releases" target="_blank"><b>Kitsune Mask</b></a> - 最强root隐藏方案</li>
-                        <li><a href="https://github.com/LSPosed/LSPosed/releases" target="_blank"><b>LSPosed</b></a> - Xposed模块框架</li>
-                        <li><a href="https://github.com/LSPosed/LSPosed.github.io/releases" target="_blank"><b>Shamiko</b></a> - 隐藏root检测</li>
-                        <li><a href="https://github.com/chiteroman/PlayIntegrityFix/releases" target="_blank"><b>Play Integrity Fix</b></a> - 过谷歌验证</li>
-                        <li><a href="https://github.com/Dr-TSNG/ZygiskNext/releases" target="_blank"><b>Zygisk Next</b></a> - 新一代Zygisk实现</li>
-                        <li><b>电脑端：</b><a href="https://developer.android.com/studio/releases/platform-tools" target="_blank">ADB/Fastboot</a>、<a href="https://odindownload.com/" target="_blank">ODIN</a>、<a href="https://spflashtool.com/" target="_blank">SP Flash Tool</a>、<a href="https://qpst.app/" target="_blank">QPST</a></li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>通用必备工具（全版本）</h3>
-                    <p>所有安卓版本root都需要</p>
-                    <ul>
-                        <li><a href="https://developer.android.com/studio/releases/platform-tools" target="_blank"><b>ADB & Fastboot</b></a> - 安卓调试桥，刷机必备</li>
-                        <li><a href="https://twrp.me/Devices/" target="_blank"><b>TWRP Recovery</b></a> - 第三方recovery，按机型选择</li>
-                        <li><a href="https://odindownload.com/" target="_blank"><b>ODIN</b></a> - 三星手机刷机工具</li>
-                        <li><a href="https://spflashtool.com/" target="_blank"><b>SP Flash Tool</b></a> - 联发科刷机工具</li>
-                        <li><a href="https://xiaomiflash.com/" target="_blank"><b>XiaoMiFlash</b></a> - 小米刷机工具</li>
-                        <li><a href="https://qpst.app/" target="_blank"><b>高通QPST</b></a> - 高通芯片救砖工具</li>
-                        <li><a href="https://play.google.com/store/apps/details?id=stericson.busybox" target="_blank"><b>BusyBox</b></a> - Linux命令工具集</li>
-                        <li><a href="https://play.google.com/store/apps/details?id=jackpal.androidterm" target="_blank"><b>Terminal Emulator</b></a> - 安卓终端模拟器</li>
-                        <li><a href="https://github.com/topjohnwu/Magisk/releases" target="_blank"><b>Magisk Manager</b></a> - Magisk配套管理APP</li>
-                    </ul>
-                </div>
-
             </div>
         </div>
 <!-- 常用软件下载 -->
@@ -866,13 +861,50 @@
             } catch(e) {}
         }
 
-        // 开机音效
-        function playBootSound() {
+        // 华为开机音效 - Web Audio生成
+        function playHuaweiBootSound() {
             try {
-                var audio = document.getElementById('bootSound');
-                audio.currentTime = 0; audio.volume = 0.8; audio.play();
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var notes = [523.25, 659.25, 783.99, 1046.50]; // C5 E5 G5 C6
+                var startTime = ctx.currentTime;
+                notes.forEach(function(freq, i) {
+                    var osc = ctx.createOscillator();
+                    var gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0, startTime + i * 0.12);
+                    gain.gain.linearRampToValueAtTime(0.25, startTime + i * 0.12 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + i * 0.12 + 0.5);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(startTime + i * 0.12);
+                    osc.stop(startTime + i * 0.12 + 0.5);
+                });
             } catch(e) {}
         }
+        // 页面加载时播放华为开机音效
+        setTimeout(playHuaweiBootSound, 300);
+        // 自动获取GitHub最新版本下载直链
+        function setLatestDownload(repo, className, keyword) {
+            fetch('https://api.github.com/repos/' + repo + '/releases/latest')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data.assets) {
+                        var asset = data.assets.find(function(a) {
+                            return a.name.toLowerCase().includes(keyword.toLowerCase());
+                        });
+                        if (asset) {
+                            var btn = document.querySelector('.' + className);
+                            if (btn) btn.href = asset.browser_download_url;
+                        }
+                    }
+                })
+                .catch(function() {});
+        }
+        setLatestDownload('LSPosed/LSPosed', 'btn-lsposed', 'zygisk');
+        setLatestDownload('LSPosed/LSPosed.github.io', 'btn-shamiko', 'shamiko');
+        setLatestDownload('Dr-TSNG/ZygiskNext', 'btn-zygisk', 'zygisknext');
+        setLatestDownload('chiteroman/PlayIntegrityFix', 'btn-pif', 'playintegrity');
 
         // 页面加载
         window.addEventListener('load', function() {
@@ -885,7 +917,6 @@
         var booted = false;
         document.getElementById('boot-screen').addEventListener('click', function() {
             if (booted) return; booted = true;
-            playBootSound();
             var self = this;
             setTimeout(function() {
                 self.classList.add('fade-out');
